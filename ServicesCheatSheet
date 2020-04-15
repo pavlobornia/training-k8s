@@ -1,0 +1,89 @@
+Services Overview
+
+Labels/Selectors
+kubectl apply -f flask-app-deployment.yaml
+kubectl get pod --show-labels
+
+KubeProxy
+
+type ClusterIP - create service for mysql
+-----------------
+
+kubectl apply -f flask-app-deployment.yaml
+kubectl apply -f mysql-deployment.yaml
+kubectl apply -f redis-deployment.yaml
+kubectl port-forward <python-app-pod-name> 8081:80
+
+kubectl apply -f mysql-service.yaml
+kubectl expose deployment/redis-deployment --name=redis-service
+kubectl port-forward <python-app-pod-name> 8081:80
+
+# Delete pod to show that IP changes
+kubectl describe pod mysql-deployment-7f77566c56-lpchl | grep IP
+kubectl describe svc mysql-service
+
+type NodePort
+--------------
+-service-node-port-range flag (default: 30000-32767
+
+kubectl apply -f flask-app-nodeport-service.yaml
+http://34.77.165.154:30007/
+http://34.76.198.247:30007/
+
+
+type LoadBalancer
+
+On cloud providers which support external load balancers, setting the type field to LoadBalancer provisions a load balancer for your Service.
+
+kubectl delete svc flask-app-service
+kubectl apply -f flask-app-service.yaml
+
+# Show redirect from LB to KubeProxy
+#Scale deployment and show hostname changes
+
+kubectl scale deployment/flask-app-deployment --replicas=3
+
+
+Discovering services
+---------------------
+
+Kubernetes supports 2 primary modes of finding a Service - environment variables and DNS.
+
+  * Env
+  When a Pod is run on a Node, the kubelet adds a set of environment variables for each active Service
+
+  kubectl get svc
+  kubectl exec flask-app-deployment-5ffd4654b8-l9pzw -- printenv | grep SERVICE
+
+  * DNS
+  A cluster-aware DNS server, such as CoreDNS, watches the Kubernetes API for new Services and creates a set of DNS records for each one. If DNS has been enabled throughout your cluster then all Pods should automatically be able to resolve Services by their DNS name.
+
+  kubectl run curl --image=radial/busyboxplus:curl -it -- /bin/sh
+  kubectl exec -it curl-66bdcf564-l4wqk -- /bin/sh
+
+  nslookup redis-service
+  nslookup redis-service.default
+
+
+kubectl describe svc redis-service
+# Change resid RepliSet to 2 and show how service change
+kubectl describe svc redis-service
+
+-------------
+
+MultiPort Services
+---
+
+Service without Selectors
+external-redis
+
+kubectl apply -f service-without-selector.yaml
+# make changes in flask-deployment.yaml
+
+kubectl delete deployment redis-deployment
+kubectl apply -f flask-app-deployment.yaml
+kubectl delete pod flask-app-deployment-765d5d7b88-bph5g
+
+---
+ExternalName Service
+---

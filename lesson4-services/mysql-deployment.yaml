@@ -1,0 +1,24 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: mysql-deployment
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: eu.gcr.io/ultra-envoy-264613/flask-db:latest
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: supersecure
+        - name: MYSQL_DATABASE
+          value: db
+        ports:
+          - containerPort: 3306
